@@ -19,7 +19,7 @@ This codebase provides a simple use case and starting point that should be modif
 Azure Pipelines provides a mechanism to generate copies of a job, each with a different input, effectively allowing for a "looping" construct. This is referred to as a [matrix execution strategy](https://learn.microsoft.com/en-us/azure/devops/pipelines/yaml-schema/jobs-job-strategy?view=azure-pipelines). This is useful for running a repeated set of tasks across different inputs, and it could presumably be used to deploy the same infrastructure as code to multiple tenants and subscriptions; however, the following constraints pose challenges to this approach:
 
 1. The matrix execution strategy can only be used when creating a [job](https://learn.microsoft.com/en-us/azure/devops/pipelines/process/phases?view=azure-devops&tabs=yaml#define-a-single-job).
-2. Service connections, which are required to authenticate to Azure, [must be defined prior to runtime and be referred to using template expression syntax](https://learn.microsoft.com/en-us/azure/devops/pipelines/process/variables?view=azure-devops&tabs=yaml%2Cbatch#runtime-expression-syntax). This is a by-design security measure.
+2. Service connections, which are required to authenticate to Azure, [must be defined prior to runtime and be referred to using template expression syntax](https://learn.microsoft.com/en-us/azure/devops/pipelines/process/variables?view=azure-devops&tabs=yaml%2Cbatch#template-expression-syntax). This is a by-design security measure.
 3. Variables can be dynamically loaded from a [template YML file](https://learn.microsoft.com/en-us/azure/devops/pipelines/process/variables?view=azure-devops&tabs=yaml%2Cbatch#specify-variables), and the lowest depth in the [hierarchy](https://techcommunity.microsoft.com/t5/healthcare-and-life-sciences/azure-devops-pipelines-tasks-jobs-stages/ba-p/3694772) they can be defined at is when a job is being invoked.
 
 So, if attempting to use the matrix execution strategy to act as a looping construct that generates a dynamic input (i.e., a service connection), that service connection cannot be used within the matrix job (see #2), nor can a template YML file be loaded containing a service connection, since the logic to load the file would need to occur after job invocation (see #1, #3).
@@ -58,7 +58,7 @@ Note that this codebase not only seeks to prove how to deploy infrastructure as 
   - `backendAzureRmKey`: The name of Terraform state file
   - `backendTfRegion`: The Azure region where the storage account will be created
 
-- This file will be dynamically loaded using the approach described in latter sections of this document.
+- These files provide a mechanism for defining variables before runtime (point #2 of the [motivation section](#motivation)), and will be dynamically loaded using the approach described in latter sections of this document.
 
 - This codebase provides stubs for two configuration files. These files should be modified to reflect your actual service connection details. Any number of configuration files can be added to this directory, and the [execution pipeline](#execution-parent-pipeline) (described in a below section) will dynamically create a matrix of jobs to deploy infrastructure to each subscription.
 
@@ -82,7 +82,7 @@ Note that this codebase not only seeks to prove how to deploy infrastructure as 
 
 - `.azure-pipelines/tf-template.yml` is a pipeline that accepts the name of a configuration file and uses the service connection to deploy infrastructure to the target subscription.
 - The steps in the pipeline are as follows:
-  1. Using the Azure CLI, perform a set of idempotent operations to create a resource group, Storage Account, and storage container in the target subscription for remotely storing Terraform state. Read more about this [here](https://learn.microsoft.com/en-us/azure/developer/terraform/store-state-in-azure-storage?tabs=azure-cli).
+  1. (Optional step) Using the Azure CLI, perform a set of idempotent operations to create a resource group, Storage Account, and storage container in the target subscription for remotely storing Terraform state. Read more about this [here](https://learn.microsoft.com/en-us/azure/developer/terraform/store-state-in-azure-storage?tabs=azure-cli).
   2. Print the contents of the configuration file to the pipeline logs for logging purposes.
   3. Install Terraform and execute the commands to initialize, plan, and apply the infrastructure changes using the service connection from the configuration file.
 
@@ -109,11 +109,11 @@ Note that this codebase not only seeks to prove how to deploy infrastructure as 
 
 ![Workflow](./docs/images/workflow_diagram.png)
 
-1. A [configuration file](#setting-up-service-connections) needs to be created for each service connection and is stored in the `.azure-pipelines/serviceConnectionTemplates` directory.
+1. A [configuration file](#setting-up-service-connections) needs to be created for each service connection and stored in the `.azure-pipelines/serviceConnectionTemplates` directory.
 2. The [execution pipeline](#execution-parent-pipeline) reads the contents of the `serviceConnectionTemplates` directory and dynamically creates a matrix of jobs to deploy infrastructure to each subscription.
 3. A [template pipeline](#template-child-pipeline) is spun up in the matrix job, and a configuration filename is passed to the template pipeline as a parameter.
-4. The template pipeline reads the configuration file and uses the service connection.
-5. The template pipeline uses Terraform to deploy infrastructure to the target subscription using the service connection.
+4. The template pipeline reads the configuration file using the parameter value.
+5. The template pipeline uses Terraform to deploy infrastructure to the target subscription using the service connection from the configuration file.
 
 ## Potential Use Cases
 
