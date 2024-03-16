@@ -10,7 +10,7 @@ variables:
   - name: serviceConnectionTemplatesDirectory
     value: "./.azure-pipelines/serviceConnectionTemplates" # update to your directory
   - name: pipelineId
-      value: "" # update to your pipeline id
+    value: "" # update to your pipeline id
 
 jobs:
   - job: generateInput
