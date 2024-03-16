@@ -1,0 +1,52 @@
+trigger:
+  branches:
+    include:
+      - none
+
+pool:
+  vmImage: "windows-latest"
+
+variables:
+  - name: serviceConnectionTemplatesDirectory
+    value: "./.azure-pipelines/serviceConnectionTemplates" # update to your directory
+  - name: pipelineId
+      value: "" # update to your pipeline id
+
+jobs:
+  - job: generateInput
+    steps:
+      # read directory and generate matrix based on files
+      - task: PowerShell@2
+        name: GenerateMatrix
+        inputs:
+          targetType: "inline"
+          script: |
+            $directory = "$(serviceConnectionTemplatesDirectory)"  # Make sure this variable points to your directory's path
+            $files = Get-ChildItem -Path $directory
+
+            $jsonObject = @{}  # Create an empty hashtable that will be converted to JSON
+
+            foreach ($file in $files) {
+              $nameWithoutExtension = $file.BaseName
+              $jsonObject[$nameWithoutExtension] = @{ serviceConnectionParameter = $nameWithoutExtension }
+            }
+
+            $json = $jsonObject | ConvertTo-Json -Compress
+            Write-Host "Generated JSON: $json"
+
+            # Save the JSON string to a variable
+            echo "##vso[task.setvariable variable=matrix;isOutput=true]$json"
+
+  # for each service connection, run the template pipeline
+  - job: runTerraform
+    dependsOn: generateInput
+    strategy:
+      matrix: $[ dependencies.generateInput.outputs['GenerateMatrix.matrix'] ]
+
+    steps:
+      # https://learn.microsoft.com/en-us/cli/azure/pipelines?view=azure-cli-latest#az-pipelines-run
+      - pwsh: |
+          az pipelines run --id $(pipelineId) --parameters serviceConnection=$(serviceConnectionParameter)
+        displayName: "Run $(serviceConnectionParameter)"
+        env:
+          AZURE_DEVOPS_EXT_PAT: $(System.AccessToken)
