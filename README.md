@@ -112,7 +112,7 @@ Note that this codebase not only seeks to prove how to deploy infrastructure as 
 1. A [configuration file](#setting-up-service-connections) needs to be created for each service connection and stored in the `.azure-pipelines/serviceConnectionTemplates` directory.
 2. The [execution pipeline](#execution-parent-pipeline) reads the contents of the `serviceConnectionTemplates` directory and dynamically creates a matrix of jobs to deploy infrastructure to each subscription.
 3. A [template pipeline](#template-child-pipeline) is spun up in the matrix job, and a configuration filename is passed to the template pipeline as a parameter.
-4. The template pipeline reads the configuration file using the parameter value, uses the service connection within to authenticate with Azure, and initializes and plans the infrastructure deployment.
+4. The template pipeline reads the configuration file using the parameter value, uses the service connection within to authenticate with Azure, and uses the Terraform files to initialize and plan the infrastructure deployment.
 5. The template pipeline uses Terraform to deploy infrastructure to the target subscription using the service connection.
 
 ## Potential Use Cases
