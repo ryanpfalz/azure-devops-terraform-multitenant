@@ -1,0 +1,17 @@
+variables:
+  - name: serviceConnectionName
+    value: "<service-connection-1-name>"
+  - name: subscriptionName
+    value: "<subscription-1-name>"
+  - name: subscriptionId
+    value: "<subscription-1-id>"
+  - name: backendAzureRmResourceGroupName
+    value: "<terraform-state-rg-1>"
+  - name: backendAzureRmStorageAccountName
+    value: "<terraform-storage-account-1>" # needs to be globally unique
+  - name: backendAzureRmContainerName
+    value: "<terraform-storage-container-1>"
+  - name: backendAzureRmKey
+    value: "<terraform-state-file-1>"
+  - name: backendTfRegion
+    value: "<terraform-region-1>" # example: eastus

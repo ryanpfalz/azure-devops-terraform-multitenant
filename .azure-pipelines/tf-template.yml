@@ -1,0 +1,88 @@
+trigger:
+  branches:
+    include:
+      - none
+
+pool:
+  vmImage: "windows-latest"
+
+# optional variables
+variables:
+  - name: workingDirectory
+    value: "infra"
+  - name: env
+    value: "dev"
+
+parameters:
+  - name: serviceConnection
+    type: string
+
+jobs:
+  - job: runTerraform
+    displayName: "Run Terraform ${{ parameters.serviceConnection }}"
+
+    variables:
+      # read from service connection template
+      - template: serviceConnectionTemplates/${{ parameters.serviceConnection }}.yml
+
+    steps:
+      # idempotent operation - setup terraform backend in Azure
+      - task: AzureCLI@2
+        displayName: "Setup Terraform Backend in Azure"
+        inputs:
+          azureSubscription: ${{ variables.serviceConnectionName }}
+          scriptType: "bash"
+          scriptLocation: "inlineScript"
+          inlineScript: |
+            az group create --name ${{ variables.backendAzureRmResourceGroupName }} --location ${{ variables.backendTfRegion }}
+            az storage account create --resource-group ${{ variables.backendAzureRmResourceGroupName }} --name ${{ variables.backendAzureRmStorageAccountName }} --sku Standard_LRS --encryption-services blob
+            tfBackendStorageKey=$(az storage account keys list --account-name ${{ variables.backendAzureRmStorageAccountName }} --resource-group ${{ variables.backendAzureRmResourceGroupName }} --query "[0].value" --output tsv)
+            az storage container create --name ${{ variables.backendAzureRmContainerName }} --public-access off --account-name ${{ variables.backendAzureRmStorageAccountName }} --account-key $tfBackendStorageKey
+
+      # print service connection variables
+      - task: PowerShell@2
+        displayName: "Check Service Connection"
+        inputs:
+          targetType: "inline"
+          script: |
+            Write-Host ${{ variables.serviceConnectionName }}
+            Write-Host ${{ variables.subscriptionId }}
+
+      # perform terraform operations
+      - task: ms-devlabs.custom-terraform-tasks.custom-terraform-installer-task.TerraformInstaller@1
+        displayName: "Install Terraform latest"
+
+      - task: ms-devlabs.custom-terraform-tasks.custom-terraform-release-task.TerraformTaskV4@4
+        displayName: "Terraform init"
+        inputs:
+          workingDirectory: ${{ variables.workingDirectory }}
+          backendServiceArm: ${{ variables.serviceConnectionName }}
+          backendAzureRmResourceGroupName: ${{ variables.backendAzureRmResourceGroupName }}
+          backendAzureRmStorageAccountName: ${{ variables.backendAzureRmStorageAccountName }}
+          backendAzureRmContainerName: ${{ variables.backendAzureRmContainerName }}
+          backendAzureRmKey: "${{ variables.env }}_${{ parameters.serviceConnection }}/${{ variables.backendAzureRmKey }}"
+
+      - task: ms-devlabs.custom-terraform-tasks.custom-terraform-release-task.TerraformTaskV4@4
+        displayName: "Terraform plan"
+        inputs:
+          command: plan
+          workingDirectory: ${{ variables.workingDirectory }}
+          environmentServiceNameAzureRM: ${{ variables.serviceConnectionName }}
+          backendServiceArm: ${{ variables.serviceConnectionName }}
+          backendAzureRmResourceGroupName: ${{ variables.backendAzureRmResourceGroupName }}
+          backendAzureRmStorageAccountName: ${{ variables.backendAzureRmStorageAccountName }}
+          backendAzureRmContainerName: ${{ variables.backendAzureRmContainerName }}
+          backendAzureRmKey: "${{ variables.env }}_${{ parameters.serviceConnection }}/${{ variables.backendAzureRmKey }}"
+
+      - task: ms-devlabs.custom-terraform-tasks.custom-terraform-release-task.TerraformTaskV4@4
+        displayName: "Terraform apply"
+        inputs:
+          command: apply
+          workingDirectory: ${{ variables.workingDirectory }}
+          environmentServiceNameAzureRM: ${{ variables.serviceConnectionName }}
+          backendServiceArm: ${{ variables.serviceConnectionName }}
+          backendAzureRmResourceGroupName: ${{ variables.backendAzureRmResourceGroupName }}
+          backendAzureRmStorageAccountName: ${{ variables.backendAzureRmStorageAccountName }}
+          backendAzureRmContainerName: ${{ variables.backendAzureRmContainerName }}
+          backendAzureRmKey: "${{ variables.env }}_${{ parameters.serviceConnection }}/${{ variables.backendAzureRmKey }}"
+          commandOptions: "-auto-approve"
