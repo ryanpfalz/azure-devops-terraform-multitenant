@@ -98,7 +98,7 @@ An organization may consider deploying infrastructure across multiple tenants an
 
 ![Workflow](./docs/images/workflow_diagram.png)
 
-1. A [configuration file](#configuring-target-tenants-and-subscriptions) is created for each subscription and is stored in the `.azure-pipelines/serviceConnectionTemplates` directory.
+1. A [configuration file](#configuring-target-tenants-and-subscriptions) is created for each service connection and is stored in the `.azure-pipelines/serviceConnectionTemplates` directory.
 2. The [execution pipeline](#execution-pipeline) reads the contents of the `serviceConnectionTemplates` directory and dynamically creates a matrix of jobs to deploy infrastructure to each subscription.
 3. A [template pipeline](#template-pipeline) is spun up in the matrix execution strategy, and a configuration filename is passed to the template pipeline as a parameter.
 4. The template pipeline reads the configuration file and uses the service connection.
