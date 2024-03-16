@@ -35,7 +35,7 @@ This codebase provides a simple use case and starting point that should be modif
 
 - _Idea for expanded use case_: Service connections can be created at a variety of scopes, including at the management group level, which can be useful for managing multiple subscriptions. While this codebase does not demonstrate this, this is a viable approach but may require additional code changes to the `.azure-pipelines/tf-execution.yml` pipeline.
 
-#### Configuration files
+#### YML Variable configuration files
 
 - Given the above assumption that service connections are created for each subscription, the `.azure-pipelines` directory contains a `serviceConnectionTemplates` directory, which contains a file for each service connection. Each file contains the following:
 
@@ -79,11 +79,18 @@ This codebase provides a simple use case and starting point that should be modif
 - The steps in the pipeline are as follows:
   1. Read the contents of the `serviceConnectionTemplates` directory and generate a matrix of jobs, one per service connection configuration file.
   2. Execute the template pipeline for each service connection configuration file, passing the filename as a parameter.
+- Note that the `infra` directory contains a simple Terraform configuration that creates a resource group. This is a simple example and should be modified to reflect your actual infrastructure requirements.
 
 ### Additional notes
 
+#### Parallel execution
+
 - The matrix execution strategy can be [configured to run jobs in parallel](https://learn.microsoft.com/en-us/azure/devops/pipelines/yaml-schema/jobs-job-strategy?view=azure-pipelines#strategy-parallel), which can be useful for speeding up the execution pipeline runtime.
 - Additional information about running jobs in parallel can be found [here](https://learn.microsoft.com/en-us/azure/devops/pipelines/licensing/concurrent-jobs?view=azure-devops&tabs=ms-hosted#what-is-a-parallel-job).
+
+#### Why can't I use a single pipeline?
+
+- TODO
 
 ## Potential Use Cases
 
