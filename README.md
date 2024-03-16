@@ -32,6 +32,7 @@ Note that this codebase not only seeks to prove how to deploy infrastructure as 
 
 - [An Azure Subscription](https://azure.microsoft.com/en-us/free/) - for hosting cloud infrastructure
 - [Azure DevOps](https://azure.microsoft.com/en-us/products/devops/) - for running pipelines
+  - [Terraform Extension for Azure DevOps](https://marketplace.visualstudio.com/items?itemName=ms-devlabs.custom-terraform-tasks) - for running Terraform commands in Azure Pipelines
 - [Azure CLI (optional on local machine)](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli) - for interacting with Azure and Azure DevOps via the command line
 - [Terraform (optional on local machine)](https://www.terraform.io/downloads.html) - for infrastructure as code
 
