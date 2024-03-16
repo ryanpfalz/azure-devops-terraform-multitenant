@@ -95,6 +95,8 @@ Note that this codebase not only seeks to prove how to deploy infrastructure as 
   1. Read the contents of the `serviceConnectionTemplates` directory and generate a matrix of jobs, one per service connection configuration file.
   2. Execute the template pipeline for each service connection configuration file, passing the filename as a parameter.
 - Note that the `infra` directory contains a simple Terraform configuration. This is a contrived example and should be modified to reflect your actual infrastructure requirements.
+- Note that you will need to enable the [Queue builds permission](https://learn.microsoft.com/en-us/azure/devops/pipelines/policies/permissions?view=azure-devops) on the template pipeline to allow the execution pipeline to trigger the template pipeline:  
+  ![Queue builds permission](./docs/images/queue_builds_permission.png)
 
 ### Additional notes
 
